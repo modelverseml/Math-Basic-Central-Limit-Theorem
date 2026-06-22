@@ -1,52 +1,55 @@
 # ML Mathematics Basics
 
-A beginner-friendly walkthrough of the statistical foundations every ML practitioner should know — with worked examples and intuition first, formulas second.
+A focused, code-first walkthrough of the statistical foundations behind machine
+learning inference — built around the **Central Limit Theorem (CLT)** and
+**confidence intervals**, with runnable simulations that let you *see* the
+theory hold.
 
-
-> Before understanding any machine learning model, it is essential to understand some basic mathematical concepts. Two of the most important topics are **inferential statistics** and **hypothesis testing**.
+> Before reasoning about any ML model's reliability, you need a working grasp of
+> **inferential statistics**: how a small sample lets us make quantified,
+> confidence-bounded claims about a population we can never measure in full.
 
 ---
 
 ## Table of Contents
 
-- [ML Mathematics Basics](#ml-mathematics-basics)
-  - [Table of Contents](#table-of-contents)
-  - [Why this repo](#why-this-repo)
-  - [Getting Started](#getting-started)
-    - [1. Clone the repository](#1-clone-the-repository)
-    - [2. Set up a virtual environment (recommended)](#2-set-up-a-virtual-environment-recommended)
-    - [3. Install dependencies](#3-install-dependencies)
-    - [4. Launch the notebook](#4-launch-the-notebook)
-  - [Inferential Statistics](#inferential-statistics)
-    - [Population vs. Sample](#population-vs-sample)
-    - [A motivating example](#a-motivating-example)
-  - [Sampling Distribution](#sampling-distribution)
-  - [Central Limit Theorem (CLT)](#central-limit-theorem-clt)
-  - [Intuition Behind Sampling Distributions and the CLT](#intuition-behind-sampling-distributions-and-the-clt)
-  - [Confidence Intervals](#confidence-intervals)
-    - [Worked example](#worked-example)
-  - [Summary](#summary)
-  - [Repository Structure](#repository-structure)
+- [Why this repo](#why-this-repo)
+- [Quick start](#quick-start)
+- [Project layout](#project-layout)
+- [Using the package as a library](#using-the-package-as-a-library)
+- [The statistics, briefly](#the-statistics-briefly)
+  - [Population vs. sample](#population-vs-sample)
+  - [Sampling distribution of the mean](#sampling-distribution-of-the-mean)
+  - [Central Limit Theorem](#central-limit-theorem)
+  - [Confidence intervals](#confidence-intervals)
+- [What the simulation shows](#what-the-simulation-shows)
+- [Summary](#summary)
 
 ---
 
 ## Why this repo
 
-Most ML tutorials jump straight into models without anchoring the reader in the math that makes those models work. This repo takes the opposite approach: build up the **statistical intuition** first, then the formulas, then code that lets you *see* the theory in action.
+Most ML tutorials jump straight into models without anchoring the reader in the
+math that makes them work. This repo takes the opposite approach: build the
+**statistical intuition** first, then the formulas, then code that demonstrates
+the theory empirically rather than asserting it.
 
+The code is organized as a small, importable Python package (`clt`) with a
+clear separation between **pure statistics** and **visualization**, plus a
+single command-line entry point that reproduces every experiment end to end.
 
 ---
 
-## Getting Started
+## Quick start
 
-### 1. Clone the repository
+**1. Clone and enter the repo**
 
 ```bash
 git clone https://github.com/<your-username>/ml_math_basics.git
 cd ml_math_basics
 ```
 
-### 2. Set up a virtual environment (recommended)
+**2. Create a virtual environment (recommended)**
 
 ```bash
 python3 -m venv .venv
@@ -54,130 +57,140 @@ source .venv/bin/activate      # macOS / Linux
 # .venv\Scripts\activate       # Windows
 ```
 
-### 3. Install dependencies
+**3. Install dependencies**
 
 ```bash
 pip install -r requirements.txt
 ```
 
-### 4. Launch the notebook
+**4. Run the demonstration**
 
 ```bash
-jupyter notebook central_limit_theorem.ipynb
+# Show the figures interactively
+python demo.py
+
+# Or save them to disk instead of displaying them
+python demo.py --save-dir figures
+
+# Make the run fully reproducible
+python demo.py --seed 42
 ```
 
----
-
-## Inferential Statistics
-
-When we talk about *mean* and *variance* in practice, we almost always mean **sample** mean and **sample** variance — not the population's. Why?
-
-Because computing population parameters requires access to the entire population, which is usually impractical: it costs memory, computation, and time. Sampling lets us estimate those parameters *with a known level of confidence*, which is good enough for most real-world decisions.
-
-### Population vs. Sample
-
-**Population Statistics**
-
-| Term                | Notation | Formula                        |
-|---------------------|----------|--------------------------------|
-| Population Size     | N        | Number of items in the population |
-| Population Mean     | μ        | (1 / N) × Σ (xᵢ)               |
-| Population Variance | σ²       | (1 / N) × Σ (xᵢ − μ)²          |
-
-**Sample Statistics**
-
-| Term              | Notation | Formula                            |
-|-------------------|----------|-------------------------------------|
-| Sample Size       | n        | Number of sampled items             |
-| Sample Mean       | x̄        | (1 / n) × Σ (xᵢ)                    |
-| Sample Variance   | s²       | (1 / (n − 1)) × Σ (xᵢ − x̄)²        |
-
-> The sample variance divides by **(n − 1)** rather than n. This is *Bessel's correction*, and it makes the sample variance an unbiased estimator of the population variance.
-
-### A motivating example
-
-Imagine a food inspection team visits a factory for a surprise check. They want to verify that the ingredient quantities on the packaging match what's actually in each product. Because the factory produces thousands of items, testing every single one is infeasible.
-
-So the team picks a **random sample**, tests it, and uses the results to make a judgment about the entire batch. If the sample meets the standards with sufficient confidence, the factory passes. Otherwise, it's flagged.
-
-This raises two natural questions:
-
-1. What do we mean by *"confidence"*?
-2. How do we know a sample actually reflects the population?
-
-To answer them, we need three building blocks: **sampling distributions**, the **Central Limit Theorem**, and **confidence intervals**.
+The script prints the population parameters, a single confidence interval, and
+the empirical coverage of 1,000 intervals, while producing four figures.
 
 ---
 
-## Sampling Distribution
+## Project layout
 
-A *sampling distribution* is the probability distribution of a statistic (such as the mean, standard deviation, or variance) obtained from **repeated** random samples drawn from the same population.
+```
+ml_math_basics/
+├── demo.py                     # CLI entry point — runs the full demo
+├── clt/                        # Importable package
+│   ├── __init__.py             # Public API re-exports
+│   ├── core.py                 # Pure statistics (no plotting, no I/O)
+│   └── plots.py                # Matplotlib/Seaborn visualizations
+├── images/                     # Static figures used in this README
+├── requirements.txt            # Runtime dependencies
+└── README.md
+```
 
-**Example.** Suppose we want to estimate the average height of all students at a university. Instead of measuring every student, we repeatedly draw random samples of, say, 30 students each. For each sample we compute the mean height. The distribution of *all those sample means* is the sampling distribution of the mean.
-
-![Sampling Distribution Example](images/sampling_distribution.png)
-
-From this construction, two important properties fall out:
-
-1. **Mean of the sampling distribution equals the population mean**
-   μ<sub>x̄</sub> = μ
-
-2. **Standard deviation of the sampling distribution (a.k.a. Standard Error)**
-   σ<sub>x̄</sub> = σ / √n
-
----
-
-## Central Limit Theorem (CLT)
-
-The Central Limit Theorem states that **regardless of the shape of the original population distribution**, if we take a sufficiently large number of random samples, the sampling distribution of the sample mean will have the following properties:
-
-1. **Mean:** μ<sub>x̄</sub> = μ
-2. **Standard Error:** σ<sub>x̄</sub> = σ / √n
-3. **Shape:** For **n > 30**, the sampling distribution of the sample mean approaches a **normal distribution**, regardless of the population's shape.
-
-This is the result that makes most of inferential statistics work. We can reason about means using the normal distribution even when the underlying data is decidedly not normal.
+The split is deliberate: `clt.core` contains only NumPy/SciPy logic, so it is
+trivial to test and reuse, while `clt.plots` and the entry-point script handle
+everything visual.
 
 ---
 
-## Intuition Behind Sampling Distributions and the CLT
+## Using the package as a library
 
-Suppose the population has 1,000 items. From it, we draw 5 samples of 950 observations each. Since each sample covers almost the whole population (missing only ~50 items), every sample mean will land very close to the true population mean μ. The variation across these sample means is tiny — and that variation *is* the standard error.
+Every experiment is exposed as a plain function, so you can drop the pieces
+into your own analysis:
 
-Put differently:
+```python
+import numpy as np
+from clt import build_population, confidence_interval, coverage_experiment
 
-> **The spread of the sampling distribution of the mean is the error in our estimate of the population mean.**
+rng = np.random.default_rng(seed=42)
 
-- Large samples (e.g., n = 950) → very small error.
-- Small samples (e.g., n = 1 or 2) → much larger variation across sample means.
+# Build a non-normal (uniform) population.
+population = build_population(size=10_000, rng=rng)
 
-Through repeated experiments, as the sample size increases, the sampling distribution stabilizes. Specifically, for **n > 30**, the sampling distribution of the mean looks like a normal distribution that is:
+# A 95% confidence interval from a single sample.
+sample = rng.choice(population, size=100, replace=True)
+ci = confidence_interval(sample, confidence=0.95, sigma=population.std())
+print(ci.mean, ci.low, ci.high, ci.contains(population.mean()))
 
-- **Centered at** the population mean (μ),
-- **Spread by** the standard error (σ / √n).
+# Verify the frequentist coverage of that procedure.
+result = coverage_experiment(population, n_trials=1_000, confidence=0.95, rng=rng)
+print(result.empirical_coverage)   # ~0.95
+```
 
-This is what the CLT formalizes — and it is exactly what the notebook in this repo demonstrates with random data.
+`confidence_interval` derives its critical value from `scipy.stats.norm`, so any
+confidence level in `(0, 1)` is supported — not just the usual 90/95/99%.
 
 ---
 
-## Confidence Intervals
+## The statistics, briefly
 
-We have a sample mean. How confident are we that it actually represents the population mean — and *within what range*?
+### Population vs. sample
 
-Because the sampling distribution of the mean is approximately normal for n > 30 (by the CLT), we can convert "confidence" into a range using the normal distribution's well-known properties.
+In practice "mean" and "variance" almost always refer to the **sample**
+statistics, because computing population parameters requires the entire
+population — usually infeasible in cost, memory, and time. Sampling lets us
+*estimate* those parameters with a known level of confidence.
 
-![Confidence Intervals](images/confidence_intervals.webp)
+**Population statistics**
 
-**Key points:**
+| Term                | Notation | Formula                            |
+|---------------------|----------|------------------------------------|
+| Population size     | N        | Number of items in the population  |
+| Population mean     | μ        | (1 / N) · Σ xᵢ                     |
+| Population variance | σ²       | (1 / N) · Σ (xᵢ − μ)²              |
 
-- A **confidence interval (CI)** is a range of values that is likely to contain the true population parameter.
-- The **confidence level** (e.g., 90%, 95%, 99%) quantifies how sure we are that the interval covers the population mean.
-- Higher confidence ⇒ wider interval. There is a tradeoff between *certainty* and *precision*.
+**Sample statistics**
 
-The general formula (when σ is known or n is large enough that s ≈ σ):
+| Term            | Notation | Formula                             |
+|-----------------|----------|-------------------------------------|
+| Sample size     | n        | Number of sampled items             |
+| Sample mean     | x̄        | (1 / n) · Σ xᵢ                      |
+| Sample variance | s²       | (1 / (n − 1)) · Σ (xᵢ − x̄)²        |
+
+> Sample variance divides by **(n − 1)** — *Bessel's correction* — which makes
+> it an unbiased estimator of the population variance.
+
+### Sampling distribution of the mean
+
+A *sampling distribution* is the probability distribution of a statistic (here,
+the mean) computed from **many repeated** random samples drawn from the same
+population.
+
+![Sampling distribution example](images/sampling_distribution.png)
+
+Two properties fall out of this construction:
+
+1. **Its mean equals the population mean:** μ<sub>x̄</sub> = μ
+2. **Its standard deviation is the *standard error*:** σ<sub>x̄</sub> = σ / √n
+
+### Central Limit Theorem
+
+The CLT states that, **regardless of the shape of the population**, the sampling
+distribution of the mean:
+
+1. is **centered** at μ,
+2. has **standard error** σ / √n, and
+3. becomes approximately **normal** as the sample size grows (a common rule of
+   thumb is *n ≳ 30*).
+
+This is the result that makes inferential statistics work: we can reason about
+means using the normal distribution even when the underlying data is far from
+normal. Quadrupling the sample size halves the standard error (the `1/√n` law).
+
+### Confidence intervals
+
+Because the sampling distribution of the mean is approximately normal, we can
+turn "confidence" into a range:
 
 > **CI = x̄ ± z · (σ / √n)**
-
-Common z-values:
 
 | Confidence | z      |
 |------------|--------|
@@ -185,61 +198,50 @@ Common z-values:
 | 95%        | 1.960  |
 | 99%        | 2.576  |
 
-### Worked example
+![Confidence intervals](images/confidence_intervals.webp)
 
-**Given**
-- Sample size (n): 100
-- Sample mean (x̄): 3.5
-- Sample standard deviation (s ≈ σ): 0.3
+A higher confidence level widens the interval — there is a direct trade-off
+between *certainty* and *precision*.
 
-**Step 1 — Standard Error**
+**Worked example.** For n = 100, x̄ = 3.5, σ ≈ 0.3, the standard error is
+0.3 / √100 = 0.03, giving:
 
-SE = σ / √n = 0.3 / √100 = 0.03
+- **90% CI:** 3.5 ± 1.645 · 0.03 = **(3.4507, 3.5493)**
+- **95% CI:** 3.5 ± 1.960 · 0.03 = **(3.4412, 3.5588)**
 
-**Step 2 — 90% Confidence Interval (z = 1.645)**
+The 95% interval is wider — being more confident costs precision.
 
-CI = 3.5 ± 1.645 × 0.03
-CI = 3.5 ± 0.04935
-**CI = (3.4507, 3.5493)**
+> **Interpretation matters.** A 95% confidence interval does *not* mean "there
+> is a 95% chance μ lies in this particular interval". It means "if we repeat
+> this procedure many times, ~95% of the constructed intervals will contain μ".
 
-**Step 3 — 95% Confidence Interval (z = 1.960)**
+---
 
-CI = 3.5 ± 1.960 × 0.03
-CI = 3.5 ± 0.0588
-**CI = (3.4412, 3.5588)**
+## What the simulation shows
 
-**Interpretation**
+Running `python demo.py` produces four figures:
 
-- **90% CI:** The population mean lies in **(3.4507, 3.5493)** with 90% confidence.
-- **95% CI:** The population mean lies in **(3.4412, 3.5588)** with 95% confidence.
-
-Notice how the 95% interval is *wider* — being more confident costs us precision.
+1. **Population distribution** — a uniform population, deliberately non-normal.
+2. **Single samples** — how individual samples become more representative as
+   `n` grows.
+3. **Sampling distributions of the mean** — for `n ∈ {2, 5, 30, 100}`; each
+   panel compares the *observed* standard error against the CLT's predicted
+   `σ / √n`, and the histograms visibly turn into bell curves as `n` rises.
+4. **Confidence-interval coverage** — 1,000 independent 95% intervals plotted
+   against the true mean; roughly 5% miss it (drawn in red), confirming the
+   frequentist interpretation empirically.
 
 ---
 
 ## Summary
 
-| Concept | What it tells us |
-|---------|------------------|
-| Population vs. Sample | Why we sample at all, and how the two relate |
-| Sampling Distribution | How a *statistic* (e.g., the mean) varies across random samples |
-| Central Limit Theorem | Why the sampling distribution of the mean is approximately normal for n > 30 |
-| Confidence Interval | A range expressing how confidently a sample statistic estimates the population parameter |
+| Concept                | What it tells us                                                             |
+|------------------------|------------------------------------------------------------------------------|
+| Population vs. sample  | Why we sample at all, and how the two relate                                 |
+| Sampling distribution  | How a statistic (e.g. the mean) varies across random samples                 |
+| Central Limit Theorem  | Why the sampling distribution of the mean is approximately normal for n ≳ 30 |
+| Confidence interval    | A range expressing how confidently a sample statistic estimates a parameter  |
 
-Together, these ideas let us make rigorous claims about a population from a comparatively tiny sample — which is what almost every ML evaluation, A/B test, and hypothesis test ultimately relies on.
-
----
-
----
-
-## Repository Structure
-
-```
-ml_math_basics/
-├── README.md                       # You are here
-├── requirements.txt                # Python dependencies
-├── central_limit_theorem.ipynb     # Sampling + CLT simulations
-└── images/
-    ├── sampling_distribution.png
-    └── confidence_intervals.webp
-```
+Together these ideas let us make rigorous claims about a population from a
+comparatively tiny sample — the foundation of nearly every ML evaluation,
+A/B test, and hypothesis test.
